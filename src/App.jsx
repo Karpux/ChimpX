@@ -1,4 +1,7 @@
 import { useMemo, useState } from 'react';
+import Feed from './components/Feed';
+import Sidebar from './components/Sidebar';
+import Topbar from './components/Topbar';
 import { supabase } from './supabaseClient';
 
 const demoPosts = [
@@ -101,132 +104,20 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="topbar">
-        <div className="brand">
-          <span className="brand-icon">◎</span>
-          <div>
-            <p className="brand-name">ChimpX Threads</p>
-            <p className="brand-subtitle">Comparte ideas en hilos cortos</p>
-          </div>
-        </div>
-        <div className="actions">
-          <button className="ghost">Explorar</button>
-          <button className="primary">Nuevo hilo</button>
-        </div>
-      </header>
+      <Topbar />
 
       <main className="layout">
-        <section className="feed">
-          <div className="composer">
-            <div className="composer-header">
-              <div>
-                <h2>¿Qué estás pensando?</h2>
-                <p>Escribe un hilo y compártelo con la comunidad.</p>
-              </div>
-              <span className="badge">{status}</span>
-            </div>
-            <textarea
-              placeholder="Cuenta algo en menos de 240 caracteres..."
-              value={composerText}
-              onChange={(event) => setComposerText(event.target.value)}
-              maxLength={maxCharacters}
-            />
-            <div className="composer-footer">
-              <span className={remainingCharacters < 20 ? 'warn' : ''}>
-                {remainingCharacters} caracteres restantes
-              </span>
-              <button
-                className="primary"
-                onClick={handlePublish}
-                disabled={loading || !composerText.trim()}
-              >
-                {loading ? 'Publicando...' : 'Publicar'}
-              </button>
-            </div>
-          </div>
+        <Feed
+          posts={posts}
+          composerText={composerText}
+          onComposerChange={(event) => setComposerText(event.target.value)}
+          onPublish={handlePublish}
+          remainingCharacters={remainingCharacters}
+          loading={loading}
+          status={status}
+        />
 
-          <div className="feed-header">
-            <h3>Tu feed</h3>
-            <button className="ghost">Ver todo</button>
-          </div>
-
-          <div className="posts">
-            {posts.map((post) => (
-              <article key={post.id} className="post-card">
-                <div className="post-avatar">{post.author[0]}</div>
-                <div className="post-body">
-                  <div className="post-meta">
-                    <div>
-                      <span className="post-author">{post.author}</span>
-                      <span className="post-handle">{post.handle}</span>
-                    </div>
-                    <span className="post-time">{post.time}</span>
-                  </div>
-                  <p className="post-content">{post.content}</p>
-                  <div className="post-tags">
-                    {post.tags.map((tag) => (
-                      <span key={tag} className="tag">
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="post-actions">
-                    <span>❤ {post.likes}</span>
-                    <span>💬 {post.replies}</span>
-                    <span>↗ Compartir</span>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <aside className="sidebar">
-          <div className="profile-card">
-            <div className="profile-avatar">CX</div>
-            <h4>ChimpX Studio</h4>
-            <p>
-              Construye, conversa y conecta con creadores que piensan en grande.
-            </p>
-            <div className="profile-stats">
-              <div>
-                <strong>3.8k</strong>
-                <span>Seguidores</span>
-              </div>
-              <div>
-                <strong>142</strong>
-                <span>Siguiendo</span>
-              </div>
-            </div>
-            <button className="primary">Completar perfil</button>
-          </div>
-
-          <div className="panel">
-            <h4>Tendencias</h4>
-            <ul>
-              {topics.map((topic) => (
-                <li key={topic.label}>
-                  <span>{topic.label}</span>
-                  <strong>{topic.metric}</strong>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="panel">
-            <h4>Próximos directos</h4>
-            <ul>
-              {sessions.map((session) => (
-                <li key={session.name}>
-                  <span>{session.name}</span>
-                  <strong>
-                    {session.time} · {session.attendees} asistentes
-                  </strong>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </aside>
+        <Sidebar topics={topics} sessions={sessions} />
       </main>
     </div>
   );
