@@ -59,6 +59,11 @@ export default function App() {
   const [composerText, setComposerText] = useState('');
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState('Modo demo activo');
+  const [user, setUser] = useState(null);
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authStatus, setAuthStatus] = useState('Ingresa para personalizar tu feed.');
+  const [authLoading, setAuthLoading] = useState(false);
 
   const remainingCharacters = useMemo(
     () => maxCharacters - composerText.length,
@@ -72,8 +77,8 @@ export default function App() {
 
     const newPost = {
       id: Date.now(),
-      author: 'Tú',
-      handle: '@tu.perfil',
+      author: user?.name || 'Tú',
+      handle: user?.handle || '@tu.perfil',
       time: 'Ahora',
       content: composerText,
       likes: 0,
@@ -102,9 +107,50 @@ export default function App() {
     setLoading(false);
   };
 
+  const handleLogin = async () => {
+    if (!authEmail || !authPassword) {
+      setAuthStatus('Completa correo y contraseña.');
+      return;
+    }
+
+    setAuthLoading(true);
+
+    if (import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY) {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: authEmail,
+        password: authPassword,
+      });
+
+      if (error) {
+        setAuthStatus('No pudimos iniciar sesión. Revisa tus datos.');
+      } else {
+        const name = data.user?.email?.split('@')[0] || 'Usuario';
+        setUser({ name, handle: `@${name}` });
+        setAuthStatus('Sesión activa en Supabase.');
+      }
+    } else {
+      const name = authEmail.split('@')[0] || 'Usuario';
+      setUser({ name, handle: `@${name}` });
+      setAuthStatus('Sesión demo activa.');
+    }
+
+    setAuthLoading(false);
+  };
+
+  const handleLogout = async () => {
+    if (import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY) {
+      await supabase.auth.signOut();
+    }
+
+    setUser(null);
+    setAuthEmail('');
+    setAuthPassword('');
+    setAuthStatus('Sesión cerrada.');
+  };
+
   return (
     <div className="app">
-      <Topbar />
+      <Topbar user={user} onLogout={handleLogout} />
 
       <main className="layout">
         <Feed
@@ -117,7 +163,19 @@ export default function App() {
           status={status}
         />
 
-        <Sidebar topics={topics} sessions={sessions} />
+        <Sidebar
+          topics={topics}
+          sessions={sessions}
+          user={user}
+          authEmail={authEmail}
+          authPassword={authPassword}
+          onAuthEmailChange={(event) => setAuthEmail(event.target.value)}
+          onAuthPasswordChange={(event) => setAuthPassword(event.target.value)}
+          onLogin={handleLogin}
+          onLogout={handleLogout}
+          authStatus={authStatus}
+          authLoading={authLoading}
+        />
       </main>
     </div>
   );
